@@ -15,11 +15,13 @@ Over time, as you install updated versions of the .NET Core runtime and SDK, you
 
 The [.NET Core version selection](selection.md) behaviors and the runtime compatibility of .NET Core across updates enables safe removal of previous versions. .NET Core runtime updates are compatible within a major version 'band' such as 1.x and 2.x. Additionally, newer releases of the .NET Core SDK generally maintain the ability to build applications that target previous versions of the runtime in a compatible manner.
 
-In general, you only need the latest SDK and latest patch version of the runtimes required for your application. Instances where retaining older SDK or Runtime versions include maintaining **project.json**-based applications. Unless your application has specific reasons for earlier SDKs or runtimes, you may safely remove older versions.
+In general, you only need the latest SDK and latest patch version of the runtimes required for your application. Instances where you need to retain older SDK or Runtime versions include maintaining **project.json**-based applications and ensuring Visual Studio has the .NET Core SDK versions it needs. Unless your application has specific reasons for earlier SDKs or runtimes, you may safely remove older versions.
+
+Visual Studio adds and removes the .NET Core SDKs it requires, starting with Visual Studio [[]] and .NET Core SDK [[]]. If you are only working with new versions of Visual Studio, it should manage .NET Core SDK versions for you. If you are installing and uninstalling SDKs manually, you'll need to be have [the versions of the .NET Core SDK that Visual Studio needs](link).
 
 ## Determine what is installed
 
-Starting with .NET Core 2.1, the .NET CLI has options you can use to list the versions of the SDK and runtime that are installed on your machine.  Use [`dotnet --list-sdks`](../tools/dotnet.md#options) to see the list of SDKs installed on your machine. Use [`dotnet --list-runtimes`](../tools/dotnet.md#options) to see the list of runtimes installed on your machine. The following text shows typical output for Windows, macOS, or Linux:
+Starting with .NET Core 2.1, the .NET CLI has options you can use to list the versions of the SDK and runtime that are installed on your machine.  Use [`dotnet --list-sdks`](../tools/dotnet.md#options) to see the list of SDKs installed on your machine (this machine needs cleaning). Use [`dotnet --list-runtimes`](../tools/dotnet.md#options) to see the list of runtimes installed on your machine. The following text shows typical output for Windows, macOS, or Linux:
 
 # [Windows](#tab/windows)
 
