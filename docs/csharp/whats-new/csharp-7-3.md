@@ -45,7 +45,7 @@ unsafe struct S
 }
 ```
 
-In earlier versions of C#, you needed to pin a variable to access one of the integers that are part of `myFixedField`. Now, the following code compiles in a safe context:
+In earlier versions of C#, you needed to pin a variable to access one of the integers that are part of `myFixedField`. Now, the following code compiles without pinning the variable `p` inside a separate `fixed` statement:
 
 ```csharp
 class C
@@ -106,7 +106,7 @@ int* pArr2 = stackalloc int[] {1, 2, 3};
 Span<int> arr = stackalloc [] {1, 2, 3};
 ```
 
-For more information, see the [`stackalloc` statement](../language-reference/keywords/stackalloc.md) article in the language reference.
+For more information, see the [`stackalloc` operator](../language-reference/operators/stackalloc.md) article.
 
 ### More types support the `fixed` statement
 

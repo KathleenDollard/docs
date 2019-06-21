@@ -56,6 +56,10 @@ This sample demonstrates many of the problems that can be solved by using Expres
 
 This series of samples demonstrate many of the features of Language Integrated Query (LINQ). The [completed sample](https://github.com/dotnet/samples/tree/master/core/linq/csharp) is available in the dotnet/samples repository on GitHub.
 
+**Managed COM server Sample**
+
+The [COM server](https://github.com/dotnet/samples/tree/master/core/extensions/COMServerDemo) sample demonstrates the creation of a managed COM server and how it can be globally registered or consumed via RegFree COM.
+
 **Microsoft Office PIA Sample**
 
 The [ExcelDemo](https://github.com/dotnet/samples/tree/master/core/extensions/ExcelDemo) sample demonstrates the consumption of [Microsoft Office PIAs](/visualstudio/vsto/office-primary-interop-assemblies) in .NET Core.
@@ -107,6 +111,6 @@ Many topics show source code and samples that are available for viewing or downl
 1. Navigate within the repository's folders to the sample's location. The relative path to the sample's location appears in your browser's address bar when you follow the link to the sample.
 1. To run a sample, you have several options:
    * Use the [dotnet CLI tools](../core/tools/index.md): In a console window, navigate to the sample's folder and use dotnet CLI commands.
-   * Use [Visual Studio](https://visualstudio.microsoft.com/) or [Visual Studio for Mac](https://visualstudio.microsoft.com/vs/visual-studio-mac/): Open the sample by selecting **File > Open > Project/Solution** from the menu bar, navigate to the sample project folder, and select the project file (*.csproj* or *.fsproj*).
+   * Use [Visual Studio](https://visualstudio.microsoft.com/vs/?utm_medium=microsoft&utm_source=docs.microsoft.com&utm_campaign=inline+link) or [Visual Studio for Mac](https://visualstudio.microsoft.com/vs/mac/?utm_medium=microsoft&utm_source=docs.microsoft.com&utm_campaign=inline+link): Open the sample by selecting **File > Open > Project/Solution** from the menu bar, navigate to the sample project folder, and select the project file (*.csproj* or *.fsproj*).
    * Use [Visual Studio Code](https://code.visualstudio.com/): Open the sample by selecting **File > Open Folder** from the menu bar and selecting the sample's project folder.
    * Use a different IDE that supports .NET Core projects.

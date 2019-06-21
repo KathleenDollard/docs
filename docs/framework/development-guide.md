@@ -42,7 +42,7 @@ This section explains how to create, configure, debug, secure, and deploy your .
  Explains how you can use configuration files to change settings without having to recompile your .NET Framework apps.  
   
  [Compiling Apps with .NET Native](../../docs/framework/net-native/index.md)  
- Explains how you can use the [!INCLUDE[net_native](../../includes/net-native-md.md)] precompilation technology to build and deploy Windows Store apps. [!INCLUDE[net_native](../../includes/net-native-md.md)] compiles apps that are written in managed code (C#) and that target the .NET Framework to native code.  
+ Explains how you can use the .NET Native precompilation technology to build and deploy Windows Store apps. .NET Native compiles apps that are written in managed code (C#) and that target the .NET Framework to native code.  
   
  [Security](../../docs/standard/security/index.md)  
  Provides information about the classes and services in the .NET Framework that facilitate secure app development.  
@@ -61,7 +61,7 @@ This section explains how to create, configure, debug, secure, and deploy your .
  
 ## Reference  
  [.NET Framework Class Library](/dotnet/api/?view=netframework-4.7)  
- Supplies syntax, code examples, and usage information for each class that is contained in the [!INCLUDE[dnprdnshort](../../includes/dnprdnshort-md.md)] namespaces.  
+ Supplies syntax, code examples, and usage information for each class that is contained in the .NET Framework namespaces.  
   
 ## Related Sections  
  [Getting Started](../../docs/framework/get-started/index.md)  

@@ -4,7 +4,7 @@ description: Learn about unnamed and named tuple types in C#
 ms.date: 05/15/2018
 ms.assetid: ee8bf7c3-aa3e-4c9e-a5c6-e05cc6138baa
 ---
-# C# tuple types #
+# C# tuple types
 
 C# tuples are types that you define using a lightweight syntax. The advantages
 include a simpler syntax, rules for conversions based on number (referred to as cardinality)
@@ -170,7 +170,7 @@ Finally, tuples may contain nested tuples. Tuple equality compares the "shape" o
 
 [!code-csharp-interactive[NestedTuples](../../samples/snippets/csharp/tuples/tuples/program.cs#SnippetNestedTuples "Tuples may contain nested tuples that participate in tuple equality.")]
 
-It's a compile time error to compare two tuples for equality (or inequality) when they have different shapes. The compiler won' attempt any deconstruction of nested tuples in order to compare them.
+It's a compile time error to compare two tuples for equality (or inequality) when they have different shapes. The compiler won't attempt any deconstruction of nested tuples in order to compare them.
 
 ## Assignment and tuples
 

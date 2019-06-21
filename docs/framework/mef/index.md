@@ -48,7 +48,7 @@ The Managed Extensibility Framework or MEF is a library for creating lightweight
 
 <a name="where_is_mef_available"></a>
 ## Where Is MEF Available?
- MEF is an integral part of the [!INCLUDE[net_v40_short](../../../includes/net-v40-short-md.md)], and is available wherever the .NET Framework is used. You can use MEF in your client applications, whether they use Windows Forms, WPF, or any other technology, or in server applications that use ASP.NET.
+ MEF is an integral part of the .NET Framework 4, and is available wherever the .NET Framework is used. You can use MEF in your client applications, whether they use Windows Forms, WPF, or any other technology, or in server applications that use ASP.NET.
 
 <a name="mef_and_maf"></a>
 ## MEF and MAF
@@ -469,11 +469,11 @@ public class Mod : SimpleCalculator.IOperation
 ## Conclusion
  This topic covered the basic concepts of MEF.
 
--   Parts, catalogs, and the composition container
+- Parts, catalogs, and the composition container
 
      Parts and the composition container are the basic building blocks of a MEF application. A part is any object that imports or exports a value, up to and including itself. A catalog provides a collection of parts from a particular source. The composition container uses the parts provided by a catalog to perform composition, the binding of imports to exports.
 
--   Imports and exports
+- Imports and exports
 
      Imports and exports are the way by which components communicate. With an import, the component specifies a need for a particular value or object, and with an export it specifies the availability of a value. Each import is matched with a list of exports by way of its contract.
 

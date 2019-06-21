@@ -1,8 +1,6 @@
 ---
 title: Implementing the Circuit Breaker pattern
 description: Learn how to implement the Circuit Breaker pattern as a complementary system to Http retries.
-author: CESARDELATORRE
-ms.author: wiwagn
 ms.date: 10/16/2018
 ---
 
@@ -142,7 +140,7 @@ Finally, another possibility for the `CircuitBreakerPolicy` is to use `Isolate` 
 ## Additional resources
 
 - **Circuit Breaker pattern**\
-  [*https://docs.microsoft.com/azure/architecture/patterns/circuit-breaker*](/azure/architecture/patterns/circuit-breaker)
+  [https://docs.microsoft.com/azure/architecture/patterns/circuit-breaker](/azure/architecture/patterns/circuit-breaker)
 
 >[!div class="step-by-step"]
 >[Previous](implement-http-call-retries-exponential-backoff-polly.md)

@@ -1,7 +1,7 @@
 ---
 title: Create a custom template for dotnet new
 description: Learn how to create a custom template for the dotnet new command in this fun tutorial.
-author: guardrex
+author: mairaw
 ms.date: 08/12/2017
 ms.custom: seodec18
 ---
@@ -205,5 +205,5 @@ dotnet new -u C:\Users\<USER>\Documents\Templates\GarciaSoftware.ConsoleTemplate
 
 - [dotnet/templating GitHub repo Wiki](https://github.com/dotnet/templating/wiki)
 - [dotnet/dotnet-template-samples GitHub repo](https://github.com/dotnet/dotnet-template-samples)
-- [How to create your own templates for dotnet new](https://blogs.msdn.microsoft.com/dotnet/2017/04/02/how-to-create-your-own-templates-for-dotnet-new/)
+- [How to create your own templates for dotnet new](https://devblogs.microsoft.com/dotnet/how-to-create-your-own-templates-for-dotnet-new/)
 - [*template.json* schema at the JSON Schema Store](http://json.schemastore.org/template)

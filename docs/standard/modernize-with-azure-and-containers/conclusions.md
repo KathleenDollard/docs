@@ -1,8 +1,6 @@
 ---
 title: Conclusions
 description: Modernize Existing .NET Applications With Azure Cloud and Windows Containers | conclusions
-author: CESARDELATORRE
-ms.author: wiwagn
 ms.date: 10/26/2017
 ---
 # Conclusions
@@ -11,7 +9,7 @@ ms.date: 10/26/2017
 
 - A Docker container is becoming the standard unit of deployment for any server-based application or service.
 
-- For production environments, you should use an orchestrator (like Service Fabric or Kubernetes) to host scalable Windows Containers­­–based applications.
+- For production environments, you should use an orchestrator (like Kubernetes) to host scalable containers­­–based applications.
 
 - Azure VMs hosting containers are a fast and simple way to create small Dev/Test environments in the cloud.
 

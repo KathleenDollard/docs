@@ -10,7 +10,7 @@ A comma-separated value (CSV) file is a text file that is often used to store sp
   
 ### To create the data file  
   
-1.  Copy the following lines into a plain text file that is named spreadsheet1.csv. Save the file in your project folder.  
+1. Copy the following lines into a plain text file that is named spreadsheet1.csv. Save the file in your project folder.  
   
     ```  
     Adams,Terry,120  
@@ -70,7 +70,7 @@ class CSVFiles
 ```  
   
 ## Compiling the Code  
- Create a project that targets the .NET Framework  version 3.5 or higher, with a reference to System.Core.dll and `using` directives for the System.Linq and System.IO namespaces.  
+Create a C# console application project, with `using` directives for the System.Linq and System.IO namespaces.
   
 ## See also
 

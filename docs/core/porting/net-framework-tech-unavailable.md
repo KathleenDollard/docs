@@ -3,7 +3,7 @@ title: .NET Framework technologies unavailable on .NET Core
 description: Learn about .NET Framework technologies that are unavailable on .NET Core
 author: cartermp
 ms.author: mairaw
-ms.date: 12/7/2018
+ms.date: 04/30/2019
 ---
 
 # .NET Framework technologies unavailable on .NET Core
@@ -16,7 +16,7 @@ Just because an API or technology isn't currently implemented doesn't imply it's
 
 Application domains (AppDomains) isolate apps from one another. AppDomains require runtime support and are generally quite expensive. Creating additional app domains is not supported.. We don't plan on adding this capability in future. For code isolation, we recommend separate processes or using containers as an alternative. For the dynamic loading of assemblies, we recommend the new <xref:System.Runtime.Loader.AssemblyLoadContext> class.
 
-To make code migration from .NET Framework easier, .NET Core exposes some of the <xref:System.AppDomain> API surface. Some of the APIs function normally (for example, <xref:System.AppDomain.UnhandledException?displayProperty=nameWithType>), some members do nothing (for example, <xref:System.AppDomain.SetCachePath%2A>), and some of them throw <xref:System.PlatformNotSupportedException> (for example, <xref:System.AppDomain.CreateDomain%2A>). Check the types you use against the [`System.AppDomain` reference source](https://github.com/dotnet/corefx/blob/master/src/System.Runtime.Extensions/src/System/AppDomain.cs) in the [dotnet/corefx GitHub repository](https://github.com/dotnet/corefx), making sure to select the branch that matches your implemented version.
+To make code migration from .NET Framework easier, .NET Core exposes some of the <xref:System.AppDomain> API surface. Some of the APIs function normally (for example, <xref:System.AppDomain.UnhandledException?displayProperty=nameWithType>), some members do nothing (for example, <xref:System.AppDomain.SetCachePath%2A>), and some of them throw <xref:System.PlatformNotSupportedException> (for example, <xref:System.AppDomain.CreateDomain%2A>). Check the types you use against the [`System.AppDomain` reference source](https://github.com/dotnet/corefx/blob/master/src/Common/src/CoreLib/System/AppDomain.cs) in the [dotnet/corefx GitHub repository](https://github.com/dotnet/corefx), making sure to select the branch that matches your implemented version.
 
 ## Remoting
 
@@ -37,6 +37,10 @@ Use security boundaries provided by the operating system, such as virtualization
 Similar to CAS, Security Transparency separates sandboxed code from security critical code in a declarative fashion but is [no longer supported as a security boundary](~/docs/framework/misc/security-transparent-code.md). This feature is heavily used by Silverlight. 
 
 Use security boundaries provided by the operating system, such as virtualization, containers, or user accounts for running processes with the least set of privileges.
+
+## System.EnterpriseServices
+
+System.EnterpiseServices (COM+) is not supported by .NET Core.
 
 >[!div class="step-by-step"]
 >[Next](third-party-deps.md)

@@ -47,12 +47,13 @@ A primary function of any database application is connecting to a data source an
  Describes performance counters available for `SqlClient` and `OracleClient`.  
   
  [Asynchronous Programming](../../../../docs/framework/data/adonet/asynchronous-programming.md)  
- Describes [!INCLUDE[vstecado](../../../../includes/vstecado-md.md)] support for asynchronous programming.  
+ Describes ADO.NET support for asynchronous programming.  
   
  [SqlClient Streaming Support](../../../../docs/framework/data/adonet/sqlclient-streaming-support.md)  
  Discusses how to write applications that stream data from SQL Server without having it fully loaded in memory.  
   
 ## See also
+
 - [Data Type Mappings in ADO.NET](../../../../docs/framework/data/adonet/data-type-mappings-in-ado-net.md)
 - [DataSets, DataTables, and DataViews](../../../../docs/framework/data/adonet/dataset-datatable-dataview/index.md)
 - [Securing ADO.NET Applications](../../../../docs/framework/data/adonet/securing-ado-net-applications.md)

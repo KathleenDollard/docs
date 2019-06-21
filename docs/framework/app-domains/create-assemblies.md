@@ -12,29 +12,29 @@ ms.author: "ronpet"
 ---
 # Creating Assemblies
 
-You can create single-file or multifile assemblies using an IDE, such as Visual Studio, or the compilers and tools provided by the [!INCLUDE[winsdklong](../../../includes/winsdklong-md.md)]. The simplest assembly is a single file that has a simple name and is loaded into a single application domain. This assembly cannot be referenced by other assemblies outside the application directory and does not undergo version checking. To uninstall the application made up of the assembly, you simply delete the directory where it resides. For many developers, an assembly with these features is all that is needed to deploy an application.
+You can create single-file or multifile assemblies using an IDE, such as Visual Studio, or the compilers and tools provided by the Windows Software Development Kit (SDK). The simplest assembly is a single file that has a simple name and is loaded into a single application domain. This assembly cannot be referenced by other assemblies outside the application directory and does not undergo version checking. To uninstall the application made up of the assembly, you simply delete the directory where it resides. For many developers, an assembly with these features is all that is needed to deploy an application.
 
 You can create a multifile assembly from several code modules and resource files. You can also create an assembly that can be shared by multiple applications. A shared assembly must have a strong name and can be deployed in the global assembly cache.
 
 You have several options when grouping code modules and resources into assemblies, depending on the following factors:
 
--   Versioning
+- Versioning
 
      Group modules that should have the same version information.
 
--   Deployment
+- Deployment
 
      Group code modules and resources that support your model of deployment.
 
--   Reuse
+- Reuse
 
      Group modules if they can be logically used together for some purpose. For example, an assembly consisting of types and classes used infrequently for program maintenance can be put in the same assembly. In addition, types that you intend to share with multiple applications should be grouped into an assembly and the assembly should be signed with a strong name.
 
--   Security
+- Security
 
      Group modules containing types that require the same security permissions.
 
--   Scoping
+- Scoping
 
      Group modules containing types whose visibility should be restricted to the same assembly.
 

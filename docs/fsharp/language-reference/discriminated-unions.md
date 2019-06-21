@@ -74,7 +74,7 @@ let getShapeHeight shape =
     | Prism(height = h) -> h
 ```
 
-Normally, the case identifiers can be used without qualifying them with the name of the union. If you want the name to always be qualified with the name of the union, you can apply the [RequireQualifiedAccess](https://msdn.microsoft.com/library/8b9b6ade-0471-4413-ac5d-638cd0de5f15) attribute to the union type definition.
+Normally, the case identifiers can be used without qualifying them with the name of the union. If you want the name to always be qualified with the name of the union, you can apply the [RequireQualifiedAccess](https://msdn.microsoft.com/visualfsharpdocs/conceptual/core.requirequalifiedaccessattribute-class-[fsharp]) attribute to the union type definition.
 
 ### Unwrapping Discriminated Unions
 
@@ -105,7 +105,7 @@ let someFunctionUsingShaderProgram (ShaderProgram id) =
 
 ## Struct Discriminated Unions
 
-Starting with F# 4.1, you can also represent Discriminated Unions as structs.  This is done with the `[<Struct>]` attribute.
+You can also represent Discriminated Unions as structs.  This is done with the `[<Struct>]` attribute.
 
 ```fsharp
 [<Struct>]
@@ -150,7 +150,7 @@ Discriminated unions can be recursive, meaning that the union itself can be incl
 
 In the previous code, `resultSumTree` has the value 10. The following illustration shows the tree structure for `myTree`.
 
-![Tree structure for myTree](../media/TreeStructureDiagram.png)
+![Diagram that shows the tree structure for myTree.](../media/discriminated-unions/tree-structure-mytree.png)
 
 Discriminated unions work well if the nodes in the tree are heterogeneous. In the following code, the type `Expression` represents the abstract syntax tree of an expression in a simple programming language that supports addition and multiplication of numbers and variables. Some of the union cases are not recursive and represent either numbers (`Number`) or variables (`Variable`). Other cases are recursive, and represent operations (`Add` and `Multiply`), where the operands are also expressions. The `Evaluate` function uses a match expression to recursively process the syntax tree.
 
@@ -158,14 +158,46 @@ Discriminated unions work well if the nodes in the tree are heterogeneous. In th
 
 When this code is executed, the value of `result` is 5.
 
-## Common Attributes
+## Members
+
+It is possible to define members on discriminated unions. The following example shows how to define a property and implement an interface:
+
+```fsharp
+open System
+
+type IPrintable =
+    abstract Print: unit -> unit
+
+type Shape =
+    | Circle of float
+    | EquilateralTriangle of float
+    | Square of float
+    | Rectangle of float * float
+
+    member this.Area =
+        match this with
+        | Circle r -> 2.0 * Math.PI * r
+        | EquilateralTriangle s -> s * s * sqrt 3.0 / 4.0
+        | Square s -> s * s
+        | Rectangle(l, w) -> l * w
+
+    interface IPrintable with
+        member this.Print () =
+            match this with
+            | Circle r -> printfn "Circle with radius %f" r
+            | EquilateralTriangle s -> printfn "Equilateral Triangle of side %f" s
+            | Square s -> printfn "Square with side %f" s
+            | Rectangle(l, w) -> printfn "Rectangle with length %f and width %f" l w
+```
+
+## Common attributes
 
 The following attributes are commonly seen in discriminated unions:
 
-* `[RequireQualifiedAccess]`
-* `[NoEquality]`
-* `[NoComparison]`
-* `[Struct]`
+* `[<RequireQualifiedAccess>]`
+* `[<NoEquality>]`
+* `[<NoComparison>]`
+* `[<Struct>]`
 
 ## See also
 
