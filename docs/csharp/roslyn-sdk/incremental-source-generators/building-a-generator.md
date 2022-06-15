@@ -243,7 +243,7 @@ Review the data model in relation to the example project. Map each variable elem
 * Casing is adjusted on output as CLI options are almost always lower case.
 * The description will be retrieved from the XML comments.
 
-## Create and test selecting syntax nodes in isolation
+## Filter syntax nodes
 
 The first step in an incremental generator that uses source code as input is to gather the syntax nodes. This is done with via the predicate passed to the `CreateSyntaxProvider` method. This predicate is passed every node in the `SyntaxTree`and returning true if the node should be further considered by the generation pipeline. Doing this in a separate method makes it easy to test in isolation.
 
@@ -260,6 +260,8 @@ When this method is called from the generator, a syntax node and a cancellation 
                      a.Name.ToString() == "CommandAttribute"));
 
 ```
+
+## Test filtering syntax nodes
 
 Testing this code requires creating a number of `SyntaxNode` and a `CancellationToken`. Create syntax nodes from source code mimics what will happen when your data runs. You can create data for your tests as strings. This sample source code is similar to the [tutorial for System.CommandLine](https://docs.microsoft.com/dotnet/standard/commandline/get-started-tutorial) :
 
@@ -285,14 +287,16 @@ public void Should_select_attributed_syntax_nodes(int expectedCount, string sour
 {
     var cancellationToken = new CancellationTokenSource().Token;
     var tree = CSharpSyntaxTree.ParseText(sourceCode);
-    var matches = tree.GetRoot().DescendantNodes().Where(node => ModelBuilder.IsSyntaxInteresting(node, cancellationToken));
+    var matches = tree.GetRoot()
+        .DescendantNodes()
+        .Where(node => ModelBuilder.IsSyntaxInteresting(node, cancellationToken));
     Assert.Equal(expectedCount, matches.Count());
 }
 ```
 
 These passing tests provide confidence that the initial filtering of syntax nodes in the generator will be successful. 
 
-## Transforming into the data model
+## Create the data model
 
 The next step in the incremental generator is to create an initial data model for each `SyntaxNode` selected by the predicate. This is done in the transform delegate that is passed to the `CreateSyntaxProvider` method. The data models are returned as an `IncrementalValuesProvider<GenerationModel>` (note the *s* on values indicating a collection).
 
@@ -301,18 +305,160 @@ Sometimes additional transformations, such as combining the initial data model w
 The signature for the transform delegate includes a `GeneratorSyntaxContext` object that cannot be created in a test. Instead, a trivial method can deconstruct the `GeneratorSyntaxContext` into a testable method:
 
 ```csharp
-public static GenerationModel? GetModel(GeneratorSyntaxContext generatorContext, CancellationToken cancellationToken)
+public static GenerationModel? GetModel(GeneratorSyntaxContext generatorContext, 
+                                        CancellationToken cancellationToken)
     => GetModel(generatorContext.Node, generatorContext.SemanticModel, cancellationToken);
 
-public static GenerationModel? GetModel(SyntaxNode syntaxNode, SemanticModel semanticModel, CancellationToken cancellationToken)
+public static GenerationModel? GetModel(SyntaxNode syntaxNode, 
+                                        SemanticModel semanticModel, 
+                                        CancellationToken cancellationToken)
 {
     // actual work here
 }
 ```
 
+The first part of creating the model is find the associated symbol from the semantic model. Note that a cancellation token is passed. The symbol is then cast to `ITypeModel`. This cast should always succeed because the predicate in the previous step of the pipeline filtered to `ClassDeclarationSyntax`. But if it does not, return null:
+
+```csharp
+var symbol = semanticModel.GetDeclaredSymbol(syntaxNode, cancellationToken);
+if (symbol is not ITypeSymbol typeSymbol)
+{ return null; }
+```
+
+The `typeModel` allows access to the members of the type, which can be filtered to just the properties for this transform. Because this collection is not bounded, cancellation of the iteration is supported. This loop creates an `OptionModel` for each property (the `GetPropertyDescription` is covered later in this section):
+
+```csharp
+var properties = typeSymbol.GetMembers().OfType<IPropertySymbol>();
+var options = new List<OptionModel>();
+foreach (var property in properties)
+{
+    // since we do not know how big this list is, so we will check cancellation token
+    // REVIEW: Should this return null or throw? 
+    if (cancellationToken.IsCancellationRequested)
+    { return null; }
+    var description = GetPropertyDescription(property);
+    options.Add(new OptionModel(property.Name, property.Type.ToString(), description));
+}
+```
+
+The `typeSymbol.Name` and the `OptionModel` collection are used to create the new `GenerationModel`:
+
+```csharp
+return new GenerationModel(typeSymbol.Name, options);
+```
+
+One of the many gems in the `SemanticModel` is access to XML documentation. In particular, the description of types, parameters, properties and other members which this sample later uses as the description of the options. Here, this is done in a local static method:
+
+```csharp
+static string GetPropertyDescription(IPropertySymbol prop)
+{
+    var doc = prop.GetDocumentationCommentXml();
+    if (string.IsNullOrEmpty(doc))
+    { return ""; }
+    var xDoc = XDocument.Parse(doc);
+    var desc = xDoc.DescendantNodes()
+        .OfType<XElement>()
+        .FirstOrDefault(x => x.Name == "summary")
+        ?.Value;
+    return desc is null
+        ? ""
+        : desc.Replace("\n","").Replace("\r", "").Trim();
+}
+```
+
+The full `GetModel` method:
+
+```csharp
+{
+    var symbol = semanticModel.GetDeclaredSymbol(syntaxNode, cancellationToken);
+    if (symbol is not ITypeSymbol typeSymbol)
+    { return null; }
+
+    var properties = typeSymbol.GetMembers().OfType<IPropertySymbol>();
+    var options = new List<OptionModel>();
+    foreach (var property in properties)
+    {
+        // since we do not know how big this list is, so we will check cancellation token
+        // REVIEW: Should this return null or throw?
+        if (cancellationToken.IsCancellationRequested)
+        { return null; }
+        var description = GetPropertyDescription(property);
+        options.Add(new OptionModel(property.Name, property.Type.ToString(), description));
+    }
+    return new GenerationModel(typeSymbol.Name, options);
+
+    static string GetPropertyDescription(IPropertySymbol prop)
+    {
+        // REVIEW: Not crazy about the repeated Parsing of small things.
+        var doc = prop.GetDocumentationCommentXml();
+        if (string.IsNullOrEmpty(doc))
+        { return ""; }
+        var xDoc = XDocument.Parse(doc);
+        var desc = xDoc.DescendantNodes()
+            .OfType<XElement>()
+            .FirstOrDefault(x => x.Name == "summary")
+            ?.Value;
+        return desc is null
+            ? ""
+            : desc.Replace("\n","").Replace("\r", "").Trim();
+    }
+}
+```
+
+## Test data model creation
+
+To allow reuse, the code to create a data model is in a separate method. This method can be called by tests which provide the source code and assert the results. This method is:
+
+```csharp
+private GenerationModel? GetModelForTesting(string sourceCode)
+{
+    var cancellationToken = new CancellationTokenSource().Token;
+    var (compilation, diagnostics) = TestHelpers.GetInputCompilation<Generator>(
+            OutputKind.DynamicallyLinkedLibrary, sourceCode);
+    Assert.Empty(diagnostics);
+    var tree = compilation.SyntaxTrees.Single();
+    var matches = tree.GetRoot()
+        .DescendantNodes()
+        .Where(node => ModelBuilder.IsSyntaxInteresting(node, cancellationToken));
+    Assert.Single(matches);
+    var syntaxNode = matches.Single();
+    return ModelBuilder.GetModel(syntaxNode, 
+                                 compilation.GetSemanticModel(tree), 
+                                 cancellationToken);
+}
+```
+
+A cancellationToken is created for later use. The source code is used to create a compilation via a helper method available in the full project. It is very easy to make mistakes when writing  source code as a string, so checking the syntax here can prevent wasting time over a typo or forgotten using statement. The source code used here is the same as used in the earlier testing of the syntax node filtering. and the same filtering is done to prepare to create the model.
+
+Once it has the correct syntax node, it passes it to the same `GetModel` method that will be used by the generator.
+
+Because the assertions are unique to each of the tests, individual tests rather than Theory tests are used. One of these tests is:
+
+```csharp
+[Fact]
+public void Should_build_model_from_SimpleClass()
+{
+    var model = GetModelForTesting(SimpleClass); 
+    Assert.NotNull(model);
+    if (model is null) return; // to appease NRT
+    Assert.Equal("Command", model.CommandName);
+    Assert.Single(model.Options);
+    Assert.Equal("Delay", model.Options.First().Name);
+    Assert.Equal("int", model.Options.First().Type);
+}
+```
+
+After retrieving the model, assertions ensure that the `GenerationModel` was built correctly.
+
+## Creating output
+
+The generator creates output using the `RegisterSourceOutput` method. This method takes two parameters; an `IncrementalValuesProvider` and a delegate. The generator iterates over the `IncrementalValuesProvider` and calls the delegate for each member passing a `SourceProductionContext` and the current member of the collection. Another overload of `RegisterSourceOutput` takes an `IncrementalValueProvider` and supports generating code from for a single value.
 
 
-##
+
+## Test code output
+
+
 
 ## Writing tests for data extraction
 
@@ -323,7 +469,7 @@ The generator for this test will be a new class in the generator project and wil
 ## Extracting data from source code
 
 
-## Writing tests for code output
+
 
 
 ## Outputting code
