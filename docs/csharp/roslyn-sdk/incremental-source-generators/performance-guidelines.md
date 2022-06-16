@@ -6,6 +6,9 @@ ms.author: kdollard
 ms.date: 6/11/2022 
 ms.topic: article
 ---
+
+@chsienki Do immutable arrays use ref equality, or do they use the ImmutableArrayValueComparer in SyntaxValueProvider by default
+
 # Performance Guidelines
 
 Your generator is run your user's design time compiler and you partner with us to maintain good design time performance for editors like Visual Studio users. The most important things to maintain performance are:
@@ -16,10 +19,7 @@ Your generator is run your user's design time compiler and you partner with us t
 * Access the compilation early and rarely.
 * Ensure value equality, including collections.
 * Build a model early and do further work on this model.
-[[ Review: Are any or all of these important. Sections not yet written.]]
-* Use resources carefully and close as early as possible [[Should we say to only use external files with APIs. What are the key issues here.]].
-* Avoid closures. [[Thinking of ensuring the context is only accessed via the lambda parameter by using the same name.]]
-* Do not throw exceptions. [[This seems to also be a usability issue.]]
+
 
 You should understand [Roslyn incremental generator design](generator-design.md) and how the incremental generator pipeline works before reading this section.
 
@@ -44,6 +44,21 @@ The SourceProductionContext manages the cancellation token for you when you are 
 We will add APIs for operations that are difficult to do correctly, and those difficult to do without hurting performance. As these APIs become available, it is important to use them for new generators and convert old generators to use them. An example of an upcoming API (17.3) is an API to get the syntax nodes a specified attribute is placed on.
 
 One set of available APIs is the `IOperation` APIs. These APIs are easier to use than directly accessing the semantic model, they are fast, and they allow VB/C# language neutral source code access for the semantic elements they support.
+
+### `ForAttributeWithMetadataName<T>`
+
+Starting in the .NET SDK 6.0.400 and Visual Studio 17.3, Roslyn provides a new API `ForAttributeWithMetadataName<T>`. The signature is;
+
+```csharp
+public IncrementalValuesProvider<T> ForAttributeWithMetadataName<T>(
+        string fullyQualifiedMetadataName,
+        Func<SyntaxNode, CancellationToken, bool> predicate,
+        Func<GeneratorAttributeSyntaxContext, CancellationToken, T> transform)
+```
+
+Provide feedback if you need simple name.
+
+[[ can't really use until 17.4 ]]
 
 ## Access the compilation early and rarely
 
@@ -74,6 +89,8 @@ flowchart LR
 
 In the first case, if the result of the transform that uses the syntax node and the TFM is unchanged, no further work is done. In the second case, `file2` is output unnecessarily.
 
+This guideline also refers to the semantic model and elements of the semantic model.
+
 ## Ensure value equality
 
 Incremental generators compare the results of each step with previous results and uses the cached value and uses the cached value if unchanged. If you use reference equality the cache will always fail. Use records or define your own equality and `GetHashCode()` method.
@@ -90,3 +107,11 @@ Your model may be complicated and require [transforming data from multiple sourc
 
 Using a model not only makes it easier for your generator to perform well, you can also create models in unit tests for later parts of your generator like creating code.
 
+[[ Review: Are any or all of these important. Sections not yet written.]]
+* Use resources carefully and close as early as possible [[Should we say to only use external files with APIs. What are the key issues here.]].
+* Avoid closures. [[Thinking of ensuring the context is only accessed via the lambda parameter by using the same name.]]
+* Do not throw exceptions. [[This seems to also be a usability issue.]]
+* Does RegisterSourceOutput cache the source. Would it be helpful to create in transformations? Would a code model be helpful there?
+* Should I switch everything in my generator to structs or with value equality are classes fine?
+
+Also, please review the sample for perf issues. Currently at https://github.com/KathleenDollard/incremental-samples

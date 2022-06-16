@@ -452,8 +452,6 @@ After retrieving the model, assertions ensure that the `GenerationModel` was bui
 
 ## Creating output
 
-The generator creates output using the `RegisterSourceOutput` method. This method takes two parameters; an `IncrementalValuesProvider` and a delegate. The generator iterates over the `IncrementalValuesProvider` and calls the delegate for each member passing a `SourceProductionContext` and the current member of the collection. Another overload of `RegisterSourceOutput` takes an `IncrementalValueProvider` and supports generating code from for a single value.
-
 
 
 ## Test code output
@@ -466,12 +464,6 @@ The generator creates output using the `RegisterSourceOutput` method. This metho
 
 The generator for this test will be a new class in the generator project and will consist of extraction and outputting the serialized model. 
 
-## Extracting data from source code
 
-
-
-
-
-## Outputting code
 
 

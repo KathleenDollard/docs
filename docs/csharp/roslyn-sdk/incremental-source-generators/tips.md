@@ -16,6 +16,10 @@ Aggressive warnings - particularly nullability and XML comments
 
 Usability
 
-## WhereNotNull method to avoid nullability warning
+## `WhereNotNull` method
+
+to avoid nullability warning
 
 ## Creating an effective dev inner loop
+
+## Attributes in `RegisterPostInitializationOutput` or a separate package
