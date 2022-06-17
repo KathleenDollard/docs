@@ -19,6 +19,7 @@ Your generator is run your user's design time compiler and you partner with us t
 * Access the compilation early and rarely.
 * Ensure value equality, including collections.
 * Build a model early and do further work on this model.
+* Do not attempt to cache yourself or to save partially generated work.
 
 
 You should understand [Roslyn incremental generator design](generator-design.md) and how the incremental generator pipeline works before reading this section.
