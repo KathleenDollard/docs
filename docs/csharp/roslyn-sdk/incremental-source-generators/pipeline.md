@@ -1,7 +1,5 @@
 # Incremental source generator pipeline
 
-// @BillWagner It is this first section that I wonder if we want a general article on. Also, any feedback on this section.
-
 Thee Roslyn incremental source generator uses a pipeline. This style of programming is common in functional programming and has been described in the F# community as Railway Oriented Programming or as a conveyer belt in a factory. The infrastructure is designed to pass a container and numerous methods can receive the container and return a new container with different contents.
 
 LINQ supports this style of programming where the container is an `IEnumerable<T1>` collection. As you call methods of the LINQ pipeline like `Select` or `OfType` a new `IEnumerable<T2>` is returned. `T1` and `T2` may be of the same or different types. And like LINQ, the pipeline is a series of delegates that are defined and executed at a later point, possibly executed multiple times.

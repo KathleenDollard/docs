@@ -452,7 +452,122 @@ After retrieving the model, assertions ensure that the `GenerationModel` was bui
 
 ## Creating output
 
+The `RegisterSourceOutput` calls a delegate that is passed a `SourceProductionContext` and the model l in the pipeline. The `SourceProductionContext` has an `AddSource` method that takes a *hint* name and the source code to output as a string. The hint name is the filename for the output that is placed in the `obj` folder.
 
+GeneratedCode method creates the source output via an interpolated string. The start of this method illustrates the approach of inserting method calls to iterate over the option collection: 
+
+```csharp
+public static string GeneratedCode(GenerationModel? modelData)
+{
+    if (modelData is null)
+    { return ""; }
+
+    return $@"
+using System.CommandLine;
+using System.CommandLine.Invocation;
+
+#nullable enable
+
+namespace TestExample;
+
+public partial class {modelData.CommandName}
+{{
+    public {modelData.CommandName}({Parameters(modelData.Options)})
+    {{
+        {CtorAssignments(modelData.Options)}
+    }}
+```
+
+Using normal literal string interpolation, you need to double C# curly brackets. If you are using C# 11 you can use raw string literals, which makes it easier to lay out this code. [Check the tip about backwards compatibility before using new C# or compiler features.](tips.md#warning-about-api-availability).
+
+To create a method like this for your generator, copy the example code you created earlier and insert calls to the model as needed. Complex output will require care retain readability
+
+Loops are handled via local functions such as `CtorAssignments`:
+
+```csharp
+static string CtorAssignments(IEnumerable<OptionModel> options)
+    => string.Join("\n        ", options.Select(o => $"{o.Name.AsProperty()} = {o.Name.AsField()};"));
+```
+
+The full method for outputting the example is:
+
+```csharp
+    public static string GeneratedCode(GenerationModel? modelData)
+    {
+        if (modelData is null)
+        { return ""; }
+
+        return $@"
+using System.CommandLine;
+using System.CommandLine.Invocation;
+
+#nullable enable
+
+namespace TestExample;
+
+public partial class {modelData.CommandName}
+{{
+    public {modelData.CommandName}({Parameters(modelData.Options)})
+    {{
+        {CtorAssignments(modelData.Options)}
+    }}
+
+    public static void Invoke(string[] args)
+        => CommandHandler.Invoke(args);
+
+    internal class CommandHandler : IncrementalGeneratorSamples.Runtime.CommandHandler<CommandHandler>
+    {{
+        {OptionFields(modelData.Options)}
+
+        public CommandHandler()
+        {{
+            {OptionCreate(modelData.Options)}
+            {OptionAssign(modelData.Options)}
+        }}
+
+        /// <summary>
+        /// The handler invoked by System.CommandLine. This will not be public when generated is more sophisticated.
+        /// </summary>
+        /// <param name=""invocationContext"">The System.CommandLine Invocation context used to retrieve values.</param>
+        public override int Invoke(InvocationContext invocationContext)
+        {{
+            var commandResult = invocationContext.ParseResult.CommandResult;
+            var command = new Command({CommandParams(modelData.Options)});
+            return command.DoWork();
+        }}
+
+        /// <summary>
+        /// The handler invoked by System.CommandLine. This will not be public when generated is more sophisticated.
+        /// </summary>
+        /// <param name=""invocationContext"">The System.CommandLine Invocation context used to retrieve values.</param>
+        public override Task<int> InvokeAsync(InvocationContext invocationContext)
+        {{
+            // Since this method is not implemented in the user source, we do not implement it here.
+            throw new NotImplementedException();
+        }}
+    }}
+
+}}
+";
+        static string Parameters(IEnumerable<OptionModel> options)
+            => string.Join(", ", options.Select(o => $"{o.Type} {o.Name.AsField()}"));
+
+        static string CtorAssignments(IEnumerable<OptionModel> options)
+            => string.Join("\n        ", options.Select(o => $"{o.Name.AsProperty()} = {o.Name.AsField()};"));
+
+        static string OptionFields(IEnumerable<OptionModel> options)
+            => string.Join("\n        ", options.Select(o => $"Option<{o.Type}> {o.Name.AsField()}Option;"));
+
+        static string OptionCreate(IEnumerable<OptionModel> options)
+            => string.Join("\n            ", options.Select(o => $"{o.Name.AsField()}Option = new Option<{o.Type}>({o.Name.AsAlias().InQuotes()}, {o.Description.InQuotes()});"));
+
+        static string OptionAssign(IEnumerable<OptionModel> options)
+            => string.Join("\n            ", options.Select(o => $"RootCommand.AddOption({o.Name.AsField()}Option);"));
+
+        static string CommandParams(IEnumerable<OptionModel> options)
+            => string.Join(", ", options.Select(o => $"GetValueForSymbol({o.Name.AsField()}Option, commandResult)"));
+    }
+```
 
 ## Test code output
 
