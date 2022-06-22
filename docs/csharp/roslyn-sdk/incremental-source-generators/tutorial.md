@@ -8,76 +8,21 @@ ms.topic: tutorial
 ---
 # Tutorial: Building an incremental generator
 
+read the developing inner loop doc
+
 There are 3 execution steps in incremental generators;
 
 * Data extraction into a model.
 * Transforming models (when needed).
 * Outputting source code.
 
-This tutorial uses the `SyntaxValueProvider` to create an `IncrementalValueProvider<GenerationModel>` which is used to output source code without needing further transformations. 
+This tutorial builds and tests individual elements of the incremental generator pipeline before creating the actual generator. This will be easier to follow if you are familiar with the [Incremental source generator pipeline](pipeline.md).
 
-The signature of the `CreateSyntaxProvider` method is:
+## Create the example project
 
-```csharp
-public IncrementalValuesProvider<T> CreateSyntaxProvider<T>(
-    Func<SyntaxNode, CancellationToken, bool> predicate, 
-    Func<GeneratorSyntaxContext, CancellationToken, T> transform);
-```
+As discussed [Developing incremental source generators](development-inner-loop.md#structure-of-the-solution-and-packages) the first step of creating a generator is building a working sample project so you know exactly what you are going to generate. In the example project, this code is in the subdirectory *GeneratedViaTest*.
 
-You'll see how to use the predicate to limit the syntax nodes under consideration, and to use the transform to further filter the syntax nodes and transform available data into a model that can be used to output source code.
-
-## The steps of a generator
- 
-The steps to build an incremental generator are;
-
-[[make links when the names settle]]
-* Create at least one sample project.
-* Design a data model.
-* Check the data model for completeness.
-* Create and test selecting syntax nodes in isolation.
-* Create and test transforming into the data model for a single syntax node.
-* Create and test code to extract the full data model via a test generator.
-* Create and test code to transform the data model if needed.
-* Create and test code to create the output via your generator.
-* Create an integration test.
-
-If it seems like a lot, its more without.
-
-Check the limitations in the Overview
-
-Pairs with tutorial.
-
-## The structure of the solution
-
-[If you want to follow along, here is the link](). The tutorial solution layout is described in the [setting up an effective inner loop for Roslyn incremental source generators]()
-
-The structure of the solution used in this tutorial has 5 projects:
-
-* The example project
-* The project containing the runtime library - specifically the attribute and base class.
-* The incremental generator.
-* The unit test project for the incremental generator.
-* An integration test project.
-
-All of the projects except the runtime library depend on the runtime library. The unit test project and the integration test project depend on the generator. The integration test project depends on the unit test project for some helper methods. All of these dependencies are project dependencies during development to facilitate the inner loop.
-
-When deployed, the incremental generator project needs a package reference to the runtime project. This very awkward during development. You can avoid this by basing package creation conditionally on an MSBuild property;
-
-```dotnetcli
-
-```
-
-The same technique and property can be used to avoid creating a package on every full build during development.
-
-## Create at least one example project
-
-The important first step of writing a source generator is to create a working example project that shows exactly what you want to create. This is just a normal project that accomplishes your goals from the .NET templates via the .NET CLI or an editor like Visual Studio.
-
-Within this example project isolate the generated code into separate files, generally in a subdirectory called something like `ViaGeneration`. You may need to use [partial classes or methods](https://docs.microsoft.com/dotnet/csharp/programming-guide/classes-and-structs/partial-classes-and-methods) to isolate the code you want to generate. Isolation is important because Roslyn source generators add new syntax trees, effectively new files, to the compilation.
-
-Ideally, create unit tests for the important aspects of this example project. [[You can reuse those unit tests during integration testing.]]
-
-Skipping the step of creating a example project, even if it is a simple generator, will make it harder to create a good generator. This example use an approach to wrapping the [System.CommandLine API](https://docs.microsoft.com/dotnet/standard/commandline/). While a more complete approach to System.CommandLine would include subcommands, this simple approach just allows the user to specify the options on they root command using code like the following:
+This example is a simple approach to wrapping the [System.CommandLine API](https://docs.microsoft.com/dotnet/standard/commandline/). While a more complete approach to System.CommandLine would include subcommands and arguments, this simple approach just allows the user to specify the options on they root command using code like the following:
 
 ```csharp
 using IncrementalGeneratorSamples.Runtime;
@@ -104,9 +49,17 @@ public partial class Command
 }
 ```
 
-An adjacent library, IncrementalGeneratorSamples.Runtime,includes the CommandAttribute and base classes. The user does not even need a using statement for System.CommandLine, although the reference is needed and will be included as a dependency of the generator package. 
+An adjacent library, IncrementalGeneratorSamples.Runtime,includes the CommandAttribute and base classes. The user does not even need a using statement for System.CommandLine, although the reference is needed and will be included as a dependency of the generator package.
 
-The generator will create code to manage System.CommandLine:
+In order to run the example project and ensure it works correctly, you need an entry point which could be a `main` method or top level statements:
+
+```csharp
+using TestExample;
+
+Command.Invoke(args)
+```
+
+The generator will create code based on the example user code. But to begin creating your generator, you need to manually write the code that will later be generated. This code will serve as a guide during development, can be copied as a starting pointing to code output, and will be used in integration testing:
 
 ```csharp
 using System.CommandLine;
@@ -164,25 +117,11 @@ public partial class Command
 }
 ```
 
-in the example project, this code is in the subdirectory *GeneratedViaTest*.
-
-Finally, in order to run the example project and ensure it works correctly, there is a entry point which could be a `main` method or top level statements:
-
-```csharp
-using TestExample;
-
-Command.Invoke(args)
-```
-
 ## Design a data model
 
-Your generator will gather input data from sources like the user's code or external files. Regardless of the source, define an explicit data model even if it contains only one value.
+The data model should contain the minimal information required for generation and will generally be scoped to internal. It must provide value equality.
 
-To support caching, incremental generator data models must have value equality.
-
-The data model should contain the minimal information required for generation and will generally be scoped to internal.
-
-In general, your data model should reflect what you are generating and use naming consistent with the logical entity you are modeling. As an example for generating a command line CLI with commands and options that will be created from :
+In order to generate a command line CLI the model needs to contain commands and options:
 
 [[ From tutorial. Not in proper form until initial review.]]
 
@@ -582,3 +521,224 @@ The generator for this test will be a new class in the generator project and wil
 
 
 
+
+
+
+You can find and implementation example of these methods in the [tutorial](tutorial.md).
+
+The delegate takes a `SyntaxNode` and returns true if the syntax is interesting.  Retrieving syntax marked with a specific attribute is so common that a new API is planned for Visual Studio 17.3 - [check the tip on backwards compatibility if you plan to use this API](tips.md#backwards-compatibility-and-the-roslyn-api).
+
+[[ **** REVIEW ****  and see review notes in code below ]]
+
+```csharp
+public static bool IsSyntaxInteresting(SyntaxNode syntaxNode, CancellationToken _)
+    // REVIEW: What's the best way to check the qualified name? 
+    // REVIEW: This should be very fast. Is it ok to ignore the cancelation token in that case?
+    // REVIEW: Will this catch all the ways people can use attributes
+    => syntaxNode is ClassDeclarationSyntax cls &&
+        cls.AttributeLists.Any(x => 
+            x.Attributes.Any(a => 
+                a.Name.ToString() == "Command" || a.Name.ToString() == "CommandAttribute"));
+```
+
+If `syntaxNode ` is not a `ClassDeclarationSyntax`, false is immediately returned from a very fast check. All class declarations in your code have their attribute lists checked. If there are no `AttributeLists` or `Attributes`, false is also returned very quickly. The slightly slower string comparison only occurs for attributes on syntax nodes. 
+
+The second delegate, `GetModel` is split into two overloads to allow testing. The generator calls the first overload passing a `GeneratorSyntaxContext` which is not available in unit tests. The second takes the only two values that are used: the `SyntaxNode` and the `SyntacticModel`. This second overload builds the data model:
+
+```csharp
+public static CommandModel? GetModel(GeneratorSyntaxContext generatorContext,
+                                        CancellationToken cancellationToken)
+    => GetModel(generatorContext.Node, generatorContext.SemanticModel, cancellationToken);
+
+public static CommandModel? GetModel(SyntaxNode syntaxNode,
+                                        SemanticModel semanticModel,
+                                        CancellationToken cancellationToken)
+{
+// get the model here 
+}
+```
+
+`GetModel` retrieves the symbol from the `SemanticModel`l Depending on what you are doing, you may want to retrieve other things from the semantic model, such as the `IOperation`. Most of the methods of the `SemanticModel` accept a cancellation token, and you should pass on the one passed to the delegate. Generation runs on code that does not successfully compile, so there may be no corresponding symbol. You can return `null` and filter out null values in the next pipeline step:
+  
+```c#
+    var symbol = semanticModel.GetDeclaredSymbol(syntaxNode, cancellationToken);
+    if (symbol is not ITypeSymbol typeSymbol)
+    { return null; }
+```
+
+One of the 
+
+```c#
+    var description = GetXmlDescription(symbol.GetDocumentationCommentXml());
+    var properties = typeSymbol.GetMembers().OfType<IPropertySymbol>();
+    var options = new List<OptionModel>();
+    foreach (var property in properties)
+    {
+        // since we do not know how big this list is, so we will check cancellation token
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var propDescription = GetXmlDescription(property.GetDocumentationCommentXml());
+        options.Add(new OptionModel(property.Name, property.Type.ToString(), propDescription));
+    }
+    return new CommandModel(typeSymbol.Name,description, options);
+```
+
+```c#
+    static string GetXmlDescription(string? doc)
+    {
+        if (string.IsNullOrEmpty(doc))
+        { return ""; }
+        var xDoc = XDocument.Parse(doc);
+        var desc = xDoc.DescendantNodes()
+            .OfType<XElement>()
+            .FirstOrDefault(x => x.Name == "summary")
+            ?.Value;
+        return desc is null
+            ? ""
+            : desc.Replace("\n","").Replace("\r", "").Trim();
+    }
+}
+```
+
+It's time to build your generator! It will look something like this:
+
+```csharp
+[Generator]
+public class Generator : IIncrementalGenerator
+{
+    public void Initialize(IncrementalGeneratorInitializationContext initContext)
+    {
+        // Output code that is always available. `common` is a string field
+        initContext.RegisterPostInitializationOutput((postInitContext) =>
+            postInitContext.AddSource("CommonAttribute.g.cs", common));
+
+        // Retrieve syntax, build a model, and filter out nulls
+        var models = initContext.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: ModelBuilder.IsSyntaxInteresting,
+                transform: ModelBuilder.GetModel)
+            .Where(static m => m is not null)!;
+
+        // If needed, create a single IncrementalValueProvider with a collection of your data model.
+        var modelCollection = models.Collect();
+
+        // Output a file for each data model. Code output retrieves data from the model.
+        initContext.RegisterSourceOutput(
+            models,
+            static (context, modelData) =>
+                    context.AddSource(CodeOutput.FileName(modelData),
+                                      CodeOutput.GenerateFromModel(modelData, context.CancellationToken)));
+
+        // Output a single file for all data models. Code output retrieves data from the model.
+        initContext.RegisterSourceOutput(
+            modelCollection,
+            static (context, modelData) =>
+                    context.AddSource("Root.g.cs",
+                                      CodeOutput.GenerateFromCollection(modelData, context.CancellationToken)));
+
+    }
+}
+```
+
+Testing this generator requires Roslyn features and your own wrapping methods. The first step is to build a compilation of your example project without the generated code. It's a good idea to copy the code plan to generate from the subdirectory (`OverwrittenInTests` was the name suggested earlier) into a solution folder.
+
+### Testing the example project compilation
+
+The first step is to ensure you can create a compilation in tests. You can use these helper methods or build your own: 
+
+```csharp
+public static (Compilation inputCompilation, IEnumerable<Diagnostic> inputDiagnostics) 
+    GetInputCompilation<TGenerator>(OutputKind outputKind, params string[] code)
+{
+    var inputCompilation = CreateInputCompilation<TGenerator>(outputKind, code.Select(x => CSharpSyntaxTree.ParseText(x)).ToArray());
+    var inputDiagnostics = inputCompilation.GetDiagnostics()
+        .Where(x => x.Severity == DiagnosticSeverity.Error || x.Severity == DiagnosticSeverity.Warning);
+    return (inputCompilation, inputDiagnostics);
+}
+```
+
+This code creates an compilation and returns the compilation and filtered diagnostics. It is called the input compilation because it is the input to the source generator.
+
+The CreateInputCompilation method creates the compilation. Creating compilation needs the kind of the output (library, console app, etc.), usings, and the metadata references, along with the syntax trees that make up the compilation:
+
+```csharp
+private static Compilation CreateInputCompilation<TGenerator>(
+    OutputKind outputKind, SyntaxTree[] syntaxTrees)
+{
+    // REVIEW: Is there a better way to get the references
+    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+    var references = assemblies
+        .Where(_ => !_.IsDynamic && !string.IsNullOrWhiteSpace(_.Location))
+        .Select(_ => MetadataReference.CreateFromFile(_.Location))
+        .Concat(new[]
+        {
+            MetadataReference.CreateFromFile(typeof(TGenerator).Assembly.Location),
+            //MetadataReference.CreateFromFile(typeof(EnumExtensionsAttribute).Assembly.Location)
+        });
+
+    var newUsings = new UsingDirectiveSyntax[] {
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.IO")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.Collections.Generic")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.Linq")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System")) };
+
+    var updatedSyntaxTrees = syntaxTrees
+        .Select(x => x.GetCompilationUnitRoot().AddUsings(newUsings).SyntaxTree);
+
+    return CSharpCompilation.Create("compilation",
+                updatedSyntaxTrees,
+                references,
+                new CSharpCompilationOptions(outputKind,
+                                            nullableContextOptions: NullableContextOptions.Enable));
+}
+```
+
+You may find that there are diagnostics in this compilation that you need to ignore because they will be resolved by the generation - such a missing class that you create. Getting the compilation correct can be one of the more frustrating aspects of creating end to end testing, so it is quite helpful to create one or more unit tests that successfully create the compilation:
+
+```csharp
+[Fact]
+public void Can_compile_input()
+{
+    var (inputCompilation, inputDiagnostics) = TestHelpers.GetInputCompilation<Generator>(OutputKind.DynamicallyLinkedLibrary, SimpleClass);
+    Assert.NotNull(inputCompilation);
+    Assert.Empty(inputDiagnostics);
+}
+```
+
+When that test passes, you're ready to generate code.
+
+### Testing the generator
+
+```csharp
+public static (Compilation compilation, IEnumerable<SyntaxTree> outputTrees, 
+               IEnumerable<Diagnostic> outputDiagnostics) 
+    GenerateTrees<TGenerator>(Compilation inputCompilation)
+    where TGenerator : IIncrementalGenerator, new()
+{
+    var generator = new TGenerator();
+    GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+    driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, 
+                                                      out var compilation, 
+                                                      out var _);
+
+    var runResult = driver.GetRunResult();
+    var outputDiagnostics = runResult.Diagnostics.Where(x => x.Severity == DiagnosticSeverity.Error || x.Severity == DiagnosticSeverity.Warning);
+    return (compilation, runResult.GeneratedTrees, outputDiagnostics);
+}
+```
+
+
+```csharp
+[Fact]
+public void Can_generate_test()
+{
+    var (inputCompilation, inputDiagnostics) = 
+        TestHelpers.GetInputCompilation<Generator>( 
+            OutputKind.DynamicallyLinkedLibrary, SimpleClass);
+    var (outputCompilation, trees, outputDiagnostics) = 
+        TestHelpers.GenerateTrees<Generator>(inputCompilation);
+    Assert.NotNull(outputCompilation);
+    Assert.Empty(outputDiagnostics);
+    Assert.Equal(4,trees.Count());
+}
+```

@@ -114,5 +114,6 @@ Using a model not only makes it easier for your generator to perform well, you c
 * Do not throw exceptions. [[This seems to also be a usability issue.]]
 * Does RegisterSourceOutput cache the source. Would it be helpful to create in transformations? Would a code model be helpful there?
 * Should I switch everything in my generator to structs or with value equality are classes fine?
+* Sometimes, I have code that should output if conditions are met, but otherwise not - via a ...ValueProvider. If I pass an empty string to AddSource, is anything created?
 
 Also, please review the sample for perf issues. Currently at https://github.com/KathleenDollard/incremental-samples

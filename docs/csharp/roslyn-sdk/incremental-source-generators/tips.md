@@ -30,4 +30,4 @@ to avoid nullability warning
 
 ## Attributes in `RegisterPostInitializationOutput` or a separate package
 
-## Warning about API availability?
+## Backwards compatibility and the Roslyn API
