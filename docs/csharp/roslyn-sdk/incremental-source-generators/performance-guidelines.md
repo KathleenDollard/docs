@@ -108,6 +108,8 @@ Your model may be complicated and require [transforming data from multiple sourc
 
 Using a model not only makes it easier for your generator to perform well, you can also create models in unit tests for later parts of your generator like creating code.
 
+## Consider the order of operations
+
 [[ Review: Are any or all of these important. Sections not yet written.]]
 * Use resources carefully and close as early as possible [[Should we say to only use external files with APIs. What are the key issues here.]].
 * Avoid closures. [[Thinking of ensuring the context is only accessed via the lambda parameter by using the same name.]]
