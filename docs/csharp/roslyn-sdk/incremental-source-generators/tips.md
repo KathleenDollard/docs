@@ -31,3 +31,7 @@ to avoid nullability warning
 ## Attributes in `RegisterPostInitializationOutput` or a separate package
 
 ## Backwards compatibility and the Roslyn API
+
+## Place #nullable enable into your generated file
+
+## Run with aggressive warnings and include XmlComments
