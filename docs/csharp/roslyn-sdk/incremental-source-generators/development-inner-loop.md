@@ -1,29 +1,28 @@
 # Developing incremental source generators
 
- The process of writing source generators is complicated by the fact you are writing code to create code, which increases the number of abstractions to consider and the ways that you need to test. Roslyn generators further complicate the picture because they are deployed as NuGet packages, and dependencies on NuGet packages that you are also actively developing is challenging. And finally, you need to ensure your generator is fast.
+ The process of writing source generators is complicated by the fact you are writing code to create code, which increases the number of abstractions to consider and the ways that you need to test. Roslyn generators further complicate the picture because you are writing code that will become part of the current compilation and they are deployed as NuGet packages. Dependencies on NuGet packages that you are actively developing is challenging. And finally, you need to ensure your generator is fast.
 
-Breaking building a generator into discreet steps lets you focus on each step:
+Splitting generator creation into discreet steps lets you focus on each step:
 
-[[make links when the names settle]]
-* Structure the solution and project layout
-* Create at least one sample project.
-* Design a data model and check it for completeness.
-* Create and test the code that builds the data model.
+* [Structure the solution and project layout.](#structure-the-solution-and-project-layout)
+* [Create at least one sample project.](#create-at-least-one-example-project)
+* [Design a data model and check it for completeness.](#design-a-data-model-and-check-it-for-completeness)
+* [Create and test the code that builds the data model.](#create-and-test-the-code-that-builds-the-data-model)
   * Create and fill the initial data model.
   * Combining, collection and transforming data models.
   * Test data model creation.
-* Create the code that outputs the generated code and test it.
-* Create the generator and test end to end.
-* Test performance.
-* Create a NuGet package.
+* [Create the code that outputs the generated code and test it.](#create-the-code-that-outputs-the-generated-code)
+* [Create the generator and test end to end.](#create-the-generator-and-test-end-to-end)
+* [Test performance.](#test-performance)
+* [Create a NuGet package.](#create-a-nuget-package)
 
-You can use these steps to build a solution that has a good development inner loop - meaning you can easily make changes, see the impact of those changes, and check for regressions. This article covers what's important in each step and how they provide an appropriate solution layout, example project, technique for testing your generator, strategy for managing NuGet packages, and mechanisms for testing. The [Roslyn incremental generator tutorial](tutorial.md) creates a sample project following the steps that are outlined here. [[ helpful to see how the pieces of the generator fit together before considering the details ]]
+You can use these steps to build a solution that has a good development inner loop for your generator - meaning you can easily make changes, see the impact of those changes on generation, and test. This article covers what's important in each of these steps. The [Roslyn incremental generator tutorial](tutorial.md) creates a sample project following the steps that are outlined here. 
 
-Before you get started, check the [limitations of Roslyn incremental source generators](overview.md#limitations-of-generators) in the Overview. It will also be helpful to read the about the [Roslyn incremental generators pipeline](pipeline.md).
+Before you get started, check the [limitations of Roslyn incremental source generators in the Overview](overview.md#limitations-of-generators). It will also be helpful to read the about the [Roslyn incremental generators pipeline](pipeline.md).
 
 ## The incremental generator
 
-Before diving into the end to end details of building a good generator, its helpful to understand how the generator initialization method structures the generator. The initialization method is the only method of the IIncrementalGenerator interface and defines a [pipeline that will run during generation](pipeline.md). As an example:
+Before diving into the end to end details of building a generator, its helpful to understand how the generator initialization method structures the generator. The initialization method is the only method of the IIncrementalGenerator interface and defines a [pipeline that will run during generation](pipeline.md). As an example:
 
 ```csharp
 using Microsoft.CodeAnalysis;
@@ -64,23 +63,21 @@ public class Generator : IIncrementalGenerator
 }
 ```
 
-This example uses two helper classes to organize the code: ModelBuilder and CodeOutput.
+The first statement of this method calls `CreateSyntaxProvider` passing two delegates, which are the `IsSyntaxInteresting` and `GetModel` method names without parentheses. `IsSyntaxInteresting` is a predicate that filters the syntax nodes, and `GetModel` builds a cacheable data model for each syntax node. This is used to output a file for each of the data models.
 
-The first command calls `CreateSyntaxProvider` passing two delegates, which are the `IsSyntaxInteresting` and `GetModel` method names without parentheses. The first is a predicate that filters the syntax nodes, and the second builds cacheable data model for each syntax node, which is used to create a file for each.
+Next, the `Collect` method creates a single item which is a collection of data models. This is used to create the single output file `Cli.Partial.g.cs`.
 
-The `Collect` method results in a single item which is a collection of data models. This is used to create the single output file `Cli.Partial.g.cs`.
-
-The last three statements output new source code into the user's compilation. The `RegisterPostInitializationOutput` always outputs the code at the start of generation. In this case it outputs part of a partial class that is always available in the calling code.
+The last three statements output new source code into the user's compilation. The `RegisterPostInitializationOutput` immediately after initialization has run. It takes no inputs, and so cannot refer to any source code written by the user, or any other compiler inputs. In this case it outputs part of a partial class that is always available in the calling code.
 
 The first `RegisterSourceOutput` outputs the other portion of this partial class.
 
 The second `RegisterSourceOutput` outputs a syntax tree and file per data model.
 
-Incremental generation uses this pipeline to generate your code.
+The initialization method sets up a pipeline which the generator infrastructure uses for generation.
 
 ## Structure the solution and project layout
 
-The project layout of your solution must manage test and production concerns, generation-time and runtime concerns, and NuGet package references used to deploy generators.
+The project layout of your solution needs to manage test and production concerns, generation-time and runtime concerns, and NuGet package references used to deploy generators.
 
 Plan for a solution that is at least 4 or 5 projects:
 
@@ -90,7 +87,9 @@ Plan for a solution that is at least 4 or 5 projects:
 * The *unit test project*.
 * An *integration test project*.
 
-You may need additional projects to organize code sharing between projects. Dependencies of the generator are deployed as NuGet packages. Projects shared to support the example project that are *not* generator dependencies can be either project or NuGet package references. Projects to support testing can also be either project or NuGet package references. The dependencies of the base set of projects are:
+You may need additional projects to organize code sharing between projects. 
+
+The dependencies of these projects are:
 
 | Project               | Dependencies         |
 |-----------------------|----------------------|
@@ -102,7 +101,7 @@ You may need additional projects to organize code sharing between projects. Depe
 
 All of these dependencies are normal project references, except the dependency of the incremental generator on the runtime library.
 
-The runtime library is separate from the generator because it includes code that is needed at both compile time and runtime. The generator depends on the runtime library and this will be a package reference when deployed. However, this package reference is challenging to manage during inner-loop development. You can treat these kinds of dependencies as project references during development and package references for deployment using a conditional MSBuild property:
+The runtime library is separate from the generator because it includes code that is needed at both compile time and runtime. The generator depends on the runtime library and this will be a NuGet package reference when the generator is deployed. However, this package reference is challenging to manage during inner-loop development, so you can treat it as a project reference during development and package reference for deployment using a conditional MSBuild property:
 
 ```xml
 <ItemGroup Condition="'$(CreatePackage)' == 'true'">
@@ -118,15 +117,13 @@ The runtime library is separate from the generator because it includes code that
 
 The important first step of writing a source generator is to create a working example that shows exactly what you want to output. This example also shows how your generated code will behave in the context of a working project.
 
-Developers often get to a level of understanding of a problem and begin writing code. If you begin with that level of understanding to write the code of your generator, rather than your example project, you will work out the details in a relatively slow inner loop. If you create an example project, you can copy parts of it as the starting point for outputting code and use it as the basis for defining input. The details will already be worked out.
+Developers often get to a level of understanding of a problem and begin writing code. If you have that level of understanding and begin to write the code of your generator, rather than your example project, you will work out the details in a relatively slow inner loop. If you create an example project you can ensure it works correctly before working on the generator. Later, you can copy parts of it as the starting point for outputting code and use it as the basis for defining input. The details will already be worked out.
 
-Your example project is just a normal .NET project. You might create it via the .NET templates in the .NET CLI or an editor like Visual Studio, or you might use a sample project that you've already created. If it is an executable, you can manually test it or write unit tests. If it is a library, you'll need unit tests. If you write unit tests for the example, you can use them as the basis for integration tests.
-
-As you create this example project, you may need to use [partial classes and methods](https://docs.microsoft.com/dotnet/csharp/programming-guide/classes-and-structs/partial-classes-and-methods) to isolate the code you want to generate and isolate it from code that is logically part of the same class. Roslyn source generators add new syntax trees, effectively new files, to the compilation. Partial classes allow you to merge these knew files with existing source.
+Your example project is just a normal .NET project. You might create it via the .NET templates in the .NET CLI or an editor like Visual Studio, or you might use a sample project that you've already created. If it is an executable, you can manually test it or you can write unit tests. If it is a library, you'll need unit tests. If you write unit tests for the example project, you can use them as the basis for integration tests.
 
 Within this example project isolate the code you plan to generate into separate files, and isolate these files in a subdirectory. This will:
 
-* Let you design the interaction between generated classes and their base and partial classes.
+* Let you design the interaction between generated classes and their base classes and any[partial classes and methods](https://docs.microsoft.com/dotnet/csharp/programming-guide/classes-and-structs/partial-classes-and-methods).
 * Provide the basis for designing how developers communicate with your generator to provide input (attributes, interfaces, well known names, etc.)
 * Be available to copy as a starting point for outputting code.
 * Provide the context for end to end testing - especially being able to compile your generated code in context.
@@ -135,21 +132,21 @@ Within this example project isolate the code you plan to generate into separate 
 
 Later this article suggests copying the directory that contains the code you will generate and overwriting the original. Because of this, you might name this subdirectory something like "OverwrittenInTests".
 
-Ensuring this code runs and does what is expected before you begin will save time as you create your generator.
+Ensuring your example project runs and does what is expected before you begin will save time as you create your generator.
 
 ## Design a data model and check it for completeness.
 
-Your generator will gather input data from sources like the user's code or external files. Regardless of the source, define an explicit data model even if it is only one value.
+Your generator will gather input data from sources like the user's code or external files. Regardless of the source, an explicit data model allows you to extract information from the sources into a cacheable model.
 
-Incremental generators rely on caching, and caching relies on data models. You might only use one model, and it might contain only one value, or you may have several models that you transform during development. The key is that you extract the data you need from the underlying source in a discreet operation as early in the pipeline processing as possible. This discrete operation will be created either by calling `SyntaxValueProvider.CreateSyntaxProvider` or `Select` on any of the other providers of `IncrementalGeneratorInitializationContext`. The [provider section or the incremental source generator pipeline article](pipeline.md#providers) and the [incremental generator specification](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md) have more information on providers.
+Incremental generators rely on caching, caching relies on value equality, and your data models can supply that value equality. You might only use one model, and it might contain only one value, or you may have several models that you transform during development. The key is that you extract the data you need from the underlying source in a discreet operation as early in the pipeline processing as possible. This discrete operation will be created either by calling `SyntaxValueProvider.CreateSyntaxProvider` or `Select` on any of the other providers of `IncrementalGeneratorInitializationContext`. The [provider section or the incremental source generator pipeline article](pipeline.md#providers) and the [incremental generator specification](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md) have more information on providers.
 
-Each model must have value equality, including using `SequenceEquals` for any collections. This is most easily done using records or record structs and customizing the equality to accommodate collections or any other data that doesn't naturally have value equality.
+Each data model must have value equality, including using `SequenceEquals` for any collections. This is most easily done using records or record structs and customizing the equality to accommodate collections or any other data that doesn't naturally have value equality.
 
-While a very simple model might be just a value or a tuple, most generators will use one or more data models that each contains several values. Although the data model is generally built from code and creates code, it should be in the language of your domain. If the domain is code itself, where there is no logical alternative but naming in your data model aligns to code features like properties, you probably need to clarify whether the data model members align with the input or output code, probably with an `input` or `output` prefix.
+Although the data model is generally built from code and is used to create code, it should be in the language of your domain. For example, if the domain is a command line definition, like System.CommandLine, the domain would include commands, arguments and options. 
 
-Your data model should be sensible in the domain you are creating. If the domain is a command line definition, like System.CommandLine, the domain would include commands, arguments and options. Most generator use input values in multiple ways, so modeling your expected output does not work well.
+If the domain is code itself, where there is no logical alternative but your data model names aligning with code features like properties and classes, you probably need to clarify whether the data model members align with the input or output code. You might do this with `input` and `output` prefixes.
 
-Once you have an example project and a data model, map the generated code to ensure the data model contains all of the variable information. For example, a class name in the generated code may be variable and therefore depend on data in the model. If source code will provide the input for the data model, also map the data model to the non generated code in the example project to understand where each value originates. You may need to update the example project to better communicate the generation input. If the input data comes from another source, such as an additional file or configuration, map the data model to that source. These mappings can be simple bulleted lists.
+Once you have an example project and a data model, map the generated code to the data model. This will ensure the data model contains all of the variable information. If user-entered source code will provide the input for the data model, also map the data model to the user-entered source code in the example project to understand where each value originates. You may need to update the example project to better communicate the generation input. If the input data comes from another source, such as an additional file or configuration, map the data model to that source. These mappings can be simple bulleted lists.
 
 ## Create and test the code that builds the data model
 
@@ -379,9 +376,9 @@ public void Initialize(IncrementalGeneratorInitializationContext initContext)
 
 The first step of the generator builds a cacheable model. In this case, no additional sources are needed so the models are complete. The `commandModelValues` is of type `IncrementalValuesProvider<Models.CommandModel?>`. `Where` removes any `null` records. Since generation runs on code even when it has compile errors, expect invalid data even if correctly compiling code would not include it.
 
-[[  @chsienki why does Where return a nullable? ]]
+[[  @chsienki why does `Where` return a nullable? ]]
 
-In addition to the individual data model, this generator outputs a single file if any data models exist. `Collect` provides this:
+This generator outputs a single file if any data models exist. `Collect` provides this:
 
 ```csharp
     var rootCommandValue = commandModelValues.Collect();
@@ -389,7 +386,7 @@ In addition to the individual data model, this generator outputs a single file i
 
 The type of `rootCommandValue` is `IncrementalValueProvider<System.Collections.Immutable.ImmutableArray<Models.CommandModel?>>`. You could simplify this content by calling `Select`.
 
-There are two kinds of output in this generator. Code that is always output, and code that is only output if there are data models. The 
+There are two kinds of output in this generator. This code uses a partial class that includes a portion that contains a method that is always available for discoverability. The other partial of this class provides the implementation. The partial class that is always available is output using the `RegisterPostInitializationOutput` method, and the part that depends on the the presence of data models is output using the `RegisterSourceOutput` method:
 
 ```csharp
     initContext.RegisterPostInitializationOutput((postInitContext) =>
@@ -403,6 +400,12 @@ There are two kinds of output in this generator. Code that is always output, and
                         modelData, outputContext.CancellationToken)));
 ```
 
+The `CodeOutput.PartialCli` checks the contained collection and returns an empty string if there are no data models.
+
+[[  @chsienki should this return an empty string or null. at what point should output use cancellation, this output is simple. ]]
+
+Finally, a file is output for each data model using the `RegisterSourceOutput` method:
+
 ```csharp
     initContext.RegisterSourceOutput(
         commandModelValues,
@@ -413,84 +416,119 @@ There are two kinds of output in this generator. Code that is always output, and
 }
 ```
 
+
+### Testing the generator
+
+With some helper methods, you can test your generator with the generator driver. 
+
+#### Creating the input compilation
+
+A helper method to get the input compilation needs the input source code as strings, and the output type of the compilation - console app, library, etc. This method needs to:
+
+* Convert each source code to a `SyntaTree`
+* Add using statements to each `SyntaxTree`
+* Define the assemblies to use in the compilation
+* Create a `CSharpCompilationOptions` instance
+* Return the newly created compilation
+
+An example of this helper method:
+
+```csharp
+public static Compilation GetInputCompilation<TGenerator>(
+    OutputKind outputKind, params string[] code)
+{
+    var syntaxTrees = code.Select(x => CSharpSyntaxTree.ParseText(x)).ToArray();
+    var newUsings = new UsingDirectiveSyntax[] {
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.IO")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.Collections.Generic")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System.Linq")),
+        SyntaxFactory.UsingDirective(SyntaxFactory .ParseName("System")) };
+    var updatedSyntaxTrees = syntaxTrees
+        .Select(x => x.GetCompilationUnitRoot().AddUsings(newUsings).SyntaxTree);
+
+    // REVIEW: Is there a better way to get the references
+    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+    var references = assemblies
+        .Where(_ => !_.IsDynamic && !string.IsNullOrWhiteSpace(_.Location))
+        .Select(_ => MetadataReference.CreateFromFile(_.Location))
+        .Concat(new[]
+        {
+            MetadataReference.CreateFromFile(typeof(TGenerator).Assembly.Location),
+        });
+
+    var compilationOptions = new CSharpCompilationOptions(
+        outputKind,
+        nullableContextOptions: NullableContextOptions.Enable);
+
+
+    return CSharpCompilation.Create("compilation",
+                                    updatedSyntaxTrees,
+                                    references,
+                                    compilationOptions);
+}
+```
+
+Use helper methods like these to to ignore unimportant diagnostics when you are checking for success in your tests:
+
+```csharp
+public static IEnumerable<Diagnostic> ErrorAndWarnings(Compilation compilation)
+    => ErrorAndWarnings(compilation.GetDiagnostics());
+
+public static IEnumerable<Diagnostic> ErrorAndWarnings(IEnumerable<Diagnostic> diagnostics) 
+    => diagnostics.Where(
+            x => x.Severity == DiagnosticSeverity.Error ||
+                    x.Severity == DiagnosticSeverity.Warning);
+```
+
+### Generate code in a test
+
+
+```csharp
+    public static (Compilation compilation, GeneratorDriverRunResult runResult) 
+        GenerateTrees<TGenerator>(Compilation inputCompilation)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var generator = new TGenerator();
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, 
+            out var compilation, out var _);
+
+        var runResult = driver.GetRunResult();
+        return (compilation, runResult);
+    }
+```
+
+### The tests
+
+
+```csharp
+[Fact]
+public void Can_generate_test()
+{
+    var inputCompilation = TestHelpers.GetInputCompilation<Generator>(
+        OutputKind.DynamicallyLinkedLibrary, SimpleClass);
+    Assert.NotNull(inputCompilation);
+    Assert.Empty(TestHelpers.ErrorAndWarnings(inputCompilation));
+
+    var (outputCompilation, runResult) = TestHelpers.GenerateTrees<Generator>(
+        inputCompilation);
+    var trees = runResult.GeneratedTrees;
+    Assert.NotNull(outputCompilation);
+    Assert.Empty(TestHelpers.ErrorAndWarnings(runResult.Diagnostics));
+
+    Assert.Equal(4,trees.Count());
+    Assert.Equal(expected1, trees[0].ToString());
+    Assert.Equal(expected2, trees[1].ToString());
+    Assert.Equal(expected3, trees[2].ToString());
+    Assert.Equal(expected4, trees[3].ToString());
+}
+```
+
 ## Test performance
+
+[[ @chsienki, etc I need help here ]]
 
 ## Create a NuGet package
 
-
-
-
-
-## Old text
-
-The first step of your generator will be to extract data into your model. If this step does not result in the correct model your generated code will be incorrect, so it is important to test the model in isolation for smoother development and to catch regressions later. Th first step uses extract it from 
-
-### Providers on `IncrementalGeneratorInitializationContext`
-
-If you are building your model using one of the providers on `IncrementalGeneratorInitializationContext`. You can find out more about the [available providers](pipeline.md#pipeline-operations). You will simply extract the data using `Select`:
-
-```c#
-// get the contents of files that end with .txt
-IncrementalValuesProvider<(string fileName, string content)> textFiles = 
-    context.AdditionalTextsProvider
-        .Where(static f => f.Path.EndsWith(".txt"))
-        .Select((additionalText, cancellationToken) => 
-            (fileName: Path.GetFileNameWithoutExtension(additionalText.Path), 
-             content: additionalText.GetText(cancellationToken)!.ToString()));
-
-```
-
-The cancellation token is important because you cannot control the size of the files, even if you anticipate them being small. Note that in the code above `Where` takes an `IncrementalValuesProvider<AdditionalText>` and returns `IncrementalValuesProvider<AdditionalText>` that contains only the files you are interested in. `Select` takes an `IncrementalValuesProvider<AdditionalText>` and uses methods and properties to create a data model - in this case a tuple of the file name and the file content as `IncrementalValuesProvider<(string fileName, string content)>`.
-
-### `SyntaxValueProvider`
-
-If you're retrieving data from the user's source code, you'll take a slightly different that uses the `IncrementalGeneratorInitializationContext.SyntaxValueProvider`. Its `CreateSyntaxProvider` method creates an `IncrementalValuesProvider<T>` specific to the syntax you are interested in using two delegates. If this delegate is a separate method, you can call it by omitting the parentheses. This will allow you to test that you are retrieving only the syntax you expect. Retrieving excess syntax nodes can hurt the performance of your generator:
-
-```csharp
-var commandModelValues = initContext.SyntaxProvider
-    .CreateSyntaxProvider(
-        predicate: ModelBuilder.IsSyntaxInteresting,
-        transform: ModelBuilder.GetModel)
-    .Where(static m => m is not null)!;
-```
-
-The first of these delegates filtered syntax. This delegate is called a massive number of times so should be extremely fast:
-
-```csharp
-public static bool IsSyntaxInteresting(SyntaxNode syntaxNode, CancellationToken cancellationToken)
-{
-    // filter syntax here
-}
-```
-
-You can test the method used as the predicate in isolation by passing random syntax nodes - some of which should pass and some fail.
-
-The second delegate is used to build the data model. This method is passed a `GeneratorSyntaxContext` and a `CancellationToken`. The `GeneratorSyntaxContext` provides the `SyntaxNode` and the `SemanticModel` of the compilation. A second overload lets you test without a `GeneratorSyntaxContext`:
-
-```csharp
-public static CommandModel? GetModel(GeneratorSyntaxContext generatorContext,
-                                    CancellationToken cancellationToken)
-    => GetModel(generatorContext.Node,
-                generatorContext.SemanticModel, 
-                cancellationToken);
-
-public static CommandModel? GetModel(SyntaxNode syntaxNode,
-                                     SemanticModel semanticModel,
-                                     CancellationToken cancellationToken)
-{
-    // build model here syntax here
-}
-```
-
-You can test `GetModel` by creating a set of syntax nodes to test by parsing test source code into a `SyntaxTree` and selecting the `DescendantNodes` that of type `SyntaxNode`. You can check that the number of matches is what you expect, and that they are the correct syntax nodes.
-
-Find out more about [unit testing supporting incremental generator methods in isolation in the testing article](testing.md#unit-tests).
-
-
-
-
-
-
-
-
+[[ ]]
 
