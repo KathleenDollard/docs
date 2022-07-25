@@ -201,6 +201,8 @@ items:
       href: ../core/tools/telemetry.md
     - name: Error messages
       items:
+      - name: List of all SDK errors
+        href: ../core/tools/sdk-errors/index.md
       - name: NETSDK1004
         href: ../core/tools/sdk-errors/netsdk1004.md
       - name: NETSDK1005 and NETSDK1047
@@ -223,8 +225,22 @@ items:
         href: ../core/tools/sdk-errors/netsdk1079.md
       - name: NETSDK1080
         href: ../core/tools/sdk-errors/netsdk1080.md
+      - name: NETSDK1082
+        href: ../core/tools/sdk-errors/netsdk1082.md
+      - name: NETSDK1100
+        href: ../core/tools/sdk-errors/netsdk1100.md
+      - name: NETSDK1112
+        href: ../core/tools/sdk-errors/netsdk1112.md
       - name: NETSDK1130
         href: ../core/tools/sdk-errors/netsdk1130.md
+      - name: NETSDK1135
+        href: ../core/tools/sdk-errors/netsdk1135.md
+      - name: NETSDK1136
+        href: ../core/tools/sdk-errors/netsdk1136.md
+      - name: NETSDK1137
+        href: ../core/tools/sdk-errors/netsdk1137.md
+      - name: NETSDK1138
+        href: ../core/tools/sdk-errors/netsdk1138.md
       - name: NETSDK1141
         href: ../core/tools/sdk-errors/netsdk1141.md
       - name: NETSDK1145
@@ -235,6 +251,8 @@ items:
         href: ../core/tools/sdk-errors/netsdk1149.md
       - name: NETSDK1174
         href: ../core/tools/sdk-errors/netsdk1174.md
+      - name: NETSDK1182
+        href: ../core/tools/sdk-errors/netsdk1182.md
   - name: .NET CLI
     items:
     - name: Overview
@@ -264,6 +282,8 @@ items:
       href: ../core/tools/dotnet-build-server.md
     - name: dotnet clean
       href: ../core/tools/dotnet-clean.md
+    - name: dotnet dev-certs
+      href: ../core/tools/dotnet-dev-certs.md
     - name: dotnet format
       href: ../core/tools/dotnet-format.md
     - name: dotnet help
@@ -373,8 +393,6 @@ items:
       href: ../core/tools/elevated-access.md
     - name: Enable Tab completion
       href: ../core/tools/enable-tab-autocomplete.md
-    - name: Continuous integration with the CLI
-      href: ../core/tools/using-ci-with-cli.md
     - name: Develop libraries with the CLI
       href: ../core/tutorials/libraries.md
     - name: Create templates for the CLI
@@ -731,6 +749,8 @@ items:
         href: ../core/diagnostics/dotnet-dump.md
       - name: dotnet-gcdump
         href: ../core/diagnostics/dotnet-gcdump.md
+      - name: dotnet-monitor
+        href: ../core/diagnostics/dotnet-monitor.md
       - name: dotnet-trace
         href: ../core/diagnostics/dotnet-trace.md
       - name: dotnet-stack
@@ -1490,6 +1510,12 @@ items:
               href: code-analysis/style-rules/ide0082.md
             - name: IDE0090
               href: code-analysis/style-rules/ide0090.md
+            - name: IDE0180
+              href: code-analysis/style-rules/ide0180.md
+          - name: Namespace declaration preferences
+            items:
+            - name: IDE0160 and IDE0161
+              href: code-analysis/style-rules/ide0160-ide0161.md
           - name: Null-checking preferences
             items:
             - name: Overview
@@ -1504,6 +1530,8 @@ items:
               href: code-analysis/style-rules/ide0031.md
             - name: IDE0041
               href: code-analysis/style-rules/ide0041.md
+            - name: IDE0150
+              href: code-analysis/style-rules/ide0150.md
             - name: IDE1005
               href: code-analysis/style-rules/ide1005.md
           - name: var preferences
@@ -1552,6 +1580,8 @@ items:
               href: code-analysis/style-rules/ide0083.md
             - name: IDE0084
               href: code-analysis/style-rules/ide0084.md
+            - name: IDE0170
+              href: code-analysis/style-rules/ide0170.md
           - name: Code block preferences
             items:
             - name: Overview
@@ -1613,7 +1643,16 @@ items:
           - name: IDE0077
             href: code-analysis/style-rules/ide0077.md
         - name: Formatting rules
-          href: code-analysis/style-rules/formatting-rules.md
+          items:
+          - name: IDE0055
+            items:
+            - name: Overview
+              displayName: formatting rule, ide0055
+              href: code-analysis/style-rules/ide0055.md
+            - name: .NET formatting options
+              href: code-analysis/style-rules/dotnet-formatting-options.md
+            - name: C# formatting options
+              href: code-analysis/style-rules/csharp-formatting-options.md
         - name: Naming rules
           href: code-analysis/style-rules/naming-rules.md
     - name: Platform compatibility analyzer
@@ -1939,6 +1978,8 @@ items:
           href: ../core/deploying/trimming/trim-warnings/il2115.md
         - name: IL2116
           href: ../core/deploying/trimming/trim-warnings/il2116.md
+  - name: Native AOT deployment model
+    href: ../core/deploying/native-aot.md
   - name: Runtime package store
     href: ../core/deploying/runtime-store.md
   - name: Runtime Identifier (RID) catalog
@@ -1958,6 +1999,8 @@ items:
   - name: GitHub Actions and .NET
     href: ../devops/github-actions-overview.md
     displayName: "continuous integration,continuous deployment,continuous delivery,ci,cd,ci/cd,github,github action,github actions,lifecycle"
+  - name: .NET CLI and Continuous Integration
+    href: ../devops/dotnet-cli-and-continuous-integration.md
   - name: Official .NET GitHub Actions
     href: ../devops/dotnet-github-action-reference.md
   - name: Tutorials
@@ -2837,21 +2880,27 @@ items:
       href: ../standard/native-interop/index.md
       displayName: Native interop
     - name: P/Invoke
-      href: ../standard/native-interop/pinvoke.md
+      items:
+      - name: Overview
+        href: ../standard/native-interop/pinvoke.md
+        displayName: P/Invoke
+      - name: Cross-platform P/Invoke
+        href: ../standard/native-interop/cross-platform.md
     - name: Type marshalling
-      href: ../standard/native-interop/type-marshalling.md
-    - name: Customize structure marshalling
-      href: ../standard/native-interop/customize-struct-marshalling.md
-    - name: Customize parameter marshalling
-      href: ../standard/native-interop/customize-parameter-marshalling.md
-    - name: Cross-platform P/Invoke
-      href: ../standard/native-interop/cross-platform.md
+      items:
+      - name: Overview
+        href: ../standard/native-interop/type-marshalling.md
+        displayName: Type marshalling
+      - name: Charsets and marshalling
+        href: ../standard/native-interop/charset.md
+      - name: Disabled marshalling
+        href: ../standard/native-interop/disabled-marshalling.md
+      - name: Customize structure marshalling
+        href: ../standard/native-interop/customize-struct-marshalling.md
+      - name: Customize parameter marshalling
+        href: ../standard/native-interop/customize-parameter-marshalling.md
     - name: Interop guidance
       href: ../standard/native-interop/best-practices.md
-    - name: Charsets and marshalling
-      href: ../standard/native-interop/charset.md
-    - name: Disabled marshalling
-      href: ../standard/native-interop/disabled-marshalling.md
     - name: Expose .NET components to COM
       href: ../core/native-interop/expose-components-to-com.md
     - name: Host .NET from native code
@@ -3007,8 +3056,8 @@ items:
         href: ../core/porting/upgrade-assistant-wpf-framework.md
       - name: Windows Forms
         href: ../core/porting/upgrade-assistant-winforms-framework.md
-      - name: Universal Windows Platform 
-        href:  ../core/porting/upgrade-assistant-uwp-framework.md       
+      - name: Universal Windows Platform
+        href:  ../core/porting/upgrade-assistant-uwp-framework.md
       - name: ASP.NET Core
         href: ../core/porting/upgrade-assistant-aspnetmvc.md
       - name: Telemetry

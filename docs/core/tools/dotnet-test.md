@@ -23,6 +23,7 @@ dotnet test [<PROJECT> | <SOLUTION> | <DIRECTORY> | <DLL> | <EXE>]
     [-c|--configuration <CONFIGURATION>]
     [--collect <DATA_COLLECTOR_NAME>]
     [-d|--diag <LOG_FILE>] [-f|--framework <FRAMEWORK>]
+    [-e|--environment <NAME="VALUE">]
     [--filter <EXPRESSION>] [--interactive]
     [-l|--logger <LOGGER>] [--no-build]
     [--nologo] [--no-restore] [-o|--output <OUTPUT_DIRECTORY>] [--os <OS>]
@@ -122,7 +123,7 @@ Where `Microsoft.NET.Test.Sdk` is the test host, `xunit` is the test framework. 
 
   Enables data collector for the test run. For more information, see [Monitor and analyze test run](https://aka.ms/vstest-collect).
   
-  On Windows (x86, x64 and arm64), Linux (x64) and macOS (x64), you can collect code coverage by using the `--collect "Code Coverage"` option. For more information, see [Use code coverage](/visualstudio/test/using-code-coverage-to-determine-how-much-code-is-being-tested) and [Customize code coverage analysis](/visualstudio/test/customizing-code-coverage-analysis).  
+  On Windows (x86, x64 and Arm64), Linux (x64) and macOS (x64), you can collect code coverage by using the `--collect "Code Coverage"` option. For more information, see [Use code coverage](/visualstudio/test/using-code-coverage-to-determine-how-much-code-is-being-tested) and [Customize code coverage analysis](/visualstudio/test/customizing-code-coverage-analysis).  
 
   To collect code coverage on any platform that is supported by .NET Core, install [Coverlet](https://github.com/coverlet-coverage/coverlet/blob/master/README.md) and use the `--collect "XPlat Code Coverage"` option.
 
@@ -131,6 +132,10 @@ Where `Microsoft.NET.Test.Sdk` is the test host, `xunit` is the test framework. 
 
   Enables diagnostic mode for the test platform and writes diagnostic messages to the specified file and to files next to it. The process that is logging the messages determines which files are created, such as `*.host_<date>.txt` for test host log, and `*.datacollector_<date>.txt` for data collector log.
 
+- **`-e|--environment <NAME="VALUE">`**
+
+  Sets the value of an environment variable. Creates the variable if it does not exist, overrides if it does exist. Use of this option will force the tests to be run in an isolated process. The option can be specified multiple times to provide multiple variables.
+  
 - **`-f|--framework <FRAMEWORK>`**
 
   The [target framework moniker (TFM)](../../standard/frameworks.md) of the target framework to run tests for. The target framework must also be specified in the project file.
@@ -149,7 +154,7 @@ Where `Microsoft.NET.Test.Sdk` is the test host, `xunit` is the test framework. 
 
 - **`--no-build`**
 
-  Doesn't build the test project before running it. It also implicitly sets the - `--no-restore` flag.
+  Doesn't build the test project before running it. It also implicitly sets the `--no-restore` flag.
 
 - **`--nologo`**
 
