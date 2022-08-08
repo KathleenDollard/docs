@@ -139,6 +139,16 @@ You can specify properties such as `PackageId`, `PackageVersion`, `PackageIcon`,
 </PropertyGroup>
 ```
 
+### PackRelease
+
+The `PackRelease` property is similar to the [PublishRelease](#publishrelease) property, except that it changes the default behavior of `dotnet pack`.
+
+```xml
+<PropertyGroup>
+  <PackRelease>true</PackRelease>
+</PropertyGroup>
+```
+
 ## Publish-related properties
 
 The following MSBuild properties are documented in this section:
@@ -155,6 +165,7 @@ The following MSBuild properties are documented in this section:
 - [PreserveCompilationContext](#preservecompilationcontext)
 - [PreserveCompilationReferences](#preservecompilationreferences)
 - [ProduceReferenceAssemblyInOutDir](#producereferenceassemblyinoutdir)
+- [PublishRelease](#publishrelease)
 - [RollForward](#rollforward)
 - [RuntimeFrameworkVersion](#runtimeframeworkversion)
 - [RuntimeIdentifier](#runtimeidentifier)
@@ -303,6 +314,19 @@ In .NET 5 and earlier versions, reference assemblies are always written to the `
 ```
 
 For more information, see [Write reference assemblies to intermediate output](../compatibility/sdk/6.0/write-reference-assemblies-to-obj.md).
+
+### PublishRelease
+
+The `PublishRelease` property informs `dotnet publish` to leverage the `Release` configuration instead of the `Debug` configuration. We recommend adding this property to a `Directory.Build.props` file instead of a project file so that it's evaluated early enough for the configuration change to propagate.
+
+```xml
+<PropertyGroup>
+  <PublishRelease>true</PublishRelease>
+</PropertyGroup>
+```
+
+> [!NOTE]
+> This property does not affect the behavior of `dotnet build /t:Publish`.
 
 ### RollForward
 
@@ -518,7 +542,7 @@ To speed up the build time, builds that are implicitly triggered by Visual Studi
 
 The following MSBuild properties are documented in this section:
 
-- [DefaultExcludesInProjectFolder](#defaultexcludesinprojectfolder)
+- [DefaultItemExcludesInProjectFolder](#defaultitemexcludesinprojectfolder)
 - [DefaultItemExcludes](#defaultitemexcludes)
 - [EnableDefaultCompileItems](#enabledefaultcompileitems)
 - [EnableDefaultEmbeddedResourceItems](#enabledefaultembeddedresourceitems)
@@ -537,15 +561,15 @@ Use the `DefaultItemExcludes` property to define glob patterns for files and fol
 </PropertyGroup>
 ```
 
-### DefaultExcludesInProjectFolder
+### DefaultItemExcludesInProjectFolder
 
-Use the `DefaultExcludesInProjectFolder` property to define glob patterns for files and folders in the project folder that should be excluded from the include, exclude, and remove globs. By default, folders that start with a period (`.`), such as *.git* and *.vs*, are excluded from the glob patterns.
+Use the `DefaultItemExcludesInProjectFolder` property to define glob patterns for files and folders in the project folder that should be excluded from the include, exclude, and remove globs. By default, folders that start with a period (`.`), such as *.git* and *.vs*, are excluded from the glob patterns.
 
-This property is very similar to the `DefaultItemExcludes` property, except that it only considers files and folders in the project folder. When a glob pattern would unintentionally match items outside the project folder with a relative path, use the `DefaultExcludesInProjectFolder` property instead of the `DefaultItemExcludes` property.
+This property is very similar to the `DefaultItemExcludes` property, except that it only considers files and folders in the project folder. When a glob pattern would unintentionally match items outside the project folder with a relative path, use the `DefaultItemExcludesInProjectFolder` property instead of the `DefaultItemExcludes` property.
 
 ```xml
 <PropertyGroup>
-  <DefaultExcludesInProjectFolder>$(DefaultExcludesInProjectFolder);**/myprefix*/**</DefaultExcludesInProjectFolder>
+  <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);**/myprefix*/**</DefaultItemExcludesInProjectFolder>
 </PropertyGroup>
 ```
 
