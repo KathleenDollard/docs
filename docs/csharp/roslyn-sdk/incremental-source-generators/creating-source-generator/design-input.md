@@ -1,21 +1,35 @@
-# Design input data
+---
+title: Designing generator input
+description: Before coding your generator, understand where you will get the necessary input.
+author: KathleenDollard
+ms.author: kdollard
+ms.date: 6/11/2022 
+ms.topic: conceptual
+---
+# Design generator input
 
-Input data can come from several sources as discussed in [pipelines subsection]
+Input data can come from several providers as discussed in [Pipelines](pipelines.md). This section will focus on designing input for use with those syntax providers, focusing on a design that uses attribute syntax provider.
 
-When source generators use C# or VB code as input, they often create special rules that are more strict than C# syntax. This code is not executed during generation, and in many cases is never executed. You must extract information from the code itself, and that information must be available to the compiler. There is minimal ability to understand calculations and control flow.
+Remember that your code is just data. Nothing will run. The user must express even complex things via simple code. If they call a method, you will know the name of the method they called, and may use this as data such as retrieving the parameter types. The method will not run during generation, and is simply data. 
 
-Attributes are useful in designing input, in addition to being very fast during generation. The RegEx generator in .NET 7 is a good example. This is an optimizing generator, and the code prior to generation looks like:
+## Attributes
+
+Attributes are useful in designing input and also allow very fast generation. The RegEx generator in .NET 7 is a good example. This is an optimizing generator, and the non-optimized code version of this code is:
 
 ```csharp
 private static readonly Regex s_myCoolRegex = new Regex("abc|def", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 ```
 
-Using the RegexGenerator attribute, this becomes:
+The optimizing generator creates a scoped partial method. [Designing generator output](design-output.md) and [the docs for partial methods]() cover the difference between scoped and non-scoped partial methods. The user writes a  
 
 ```csharp
 [RegexGenerator("abc|def", RegexOptions.IgnoreCase)]
 private static partial Regex MyCoolRegex();
 ```
+
+When source generators use C# or VB code as input, they often create special rules that are more strict than C# syntax. This code is not executed during generation, and in many cases is never executed. You must extract information from the code itself, and that information must be available to the compiler. There is minimal ability to understand calculations and control flow.
+
+
 
 Because the information for generation are compile time constants, the programmer using the generator won't be be able to supply a calculation.
 
@@ -120,3 +134,5 @@ It's helpful to review the code you intend to create and record the information 
 There are restrictions on some of the values the user can enter, and it is good to identify the analyzers that you probably want to write to accompany your generator. In this case, there are a small number of valid return types from the execute method and the only generics that are allowed in option types is `IEnumerable<T>`.
 
 This is a greatly simplified approach to `System.CommandLine` and if you would like to further explore generation, you might want to add features, such as adding arguments or subcommands.
+
+Next Step: [Create models](create-models.md).
